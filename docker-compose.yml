@@ -1,0 +1,36 @@
+
+volumes:
+  wallet_test:
+
+services:
+
+  wallet_db:
+    image: 'postgres:16.4'
+    container_name: wallet_db
+    restart: always
+    environment:
+      - 'POSTGRES_USER=root'
+      - 'POSTGRES_PASSWORD=1234'
+      - 'POSTGRES_DB=wallet_db'
+    volumes:
+      - ./src/main/resources/postgresql.conf:/etc/postgresql/postgresql.conf
+      - wallet_test:/var/lib/postgresql/data
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    ports:
+      - "5433:5432"
+
+  app:
+    restart: no
+    build: .
+    ports:
+      - "8181:8080"
+    depends_on:
+      - wallet_db
+    volumes:
+      - ./src/main/resources/application.yaml:/opt/app/config/application.yaml
+    environment:
+      SPRING_DATASOURCE_URL: 'jdbc:postgresql://wallet_db:5432/wallet_db'
+      SPRING_DATASOURCE_USERNAME: 'root'
+      SPRING_DATASOURCE_PASSWORD: '1234'
+      SPRING_CONFIG_LOCATION: './config/application.yaml'
+      JAVA_OPTS: '-Xmx1024m'
